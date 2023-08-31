@@ -1,0 +1,35 @@
+{
+  "name": "@iipe/data-marketplace",
+  "version": "0.1.0-alpha.0",
+  "main": "index.js",
+  "repository": "https://gitlab.cc-asp.fraunhofer.de/iip-ecosphere/data-marketplace.git",
+  "author": "Sergej Atamantschuk <sergejatam@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "init": "yarn && yarn run init:server && yarn run init:storefront && yarn run init:admin",
+    "init:server": "yarn --cwd 'core/server' run init",
+    "init:storefront": "yarn --cwd 'storefront' run init",
+    "init:admin": "yarn --cwd 'admin' run init",
+    "dev": "yarn && yarn run dev:server && yarn run dev:storefront",
+    "dev:server": "yarn --cwd 'core/server' run dev:server",
+    "dev:storefront": "yarn --cwd 'storefront' run dev",
+    "dev:storefront:theme": "yarn --cwd 'storefront' run dev:theme",
+    "dev:storefront:api": "yarn --cwd 'storefront' run dev:api-client",
+    "dev:storefront:composables": "yarn --cwd 'storefront' run dev:composables",
+    "build": "yarn run build:storefront",
+    "build:storefront": "yarn --cwd 'storefront' run build",
+    "build:storefront:api": "yarn --cwd 'storefront' run build:api-client",
+    "build:storefront:composables": "yarn --cwd 'storefront' run build:composables",
+    "postinstall": "husky install",
+    "prepack": "pinst --disable",
+    "postpack": "pinst --enable"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^16.2.1",
+    "@commitlint/config-conventional": "^16.2.1",
+    "concurrently": "^7.0.0",
+    "fse": "^4.0.1",
+    "husky": "^7.0.0",
+    "pinst": "^3.0.0"
+  }
+}

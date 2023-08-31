@@ -1,0 +1,164 @@
+enum DataClassificationEnum {
+    Public
+    Internal
+    Confidential
+    Restricted
+}
+
+enum ThemesEnum {
+    Agriculture
+    Culture
+    Economy
+    Education
+    Energy
+    Environment
+    Finance
+    Fisheries
+    Health
+    Infrastructure
+    International
+    Justice
+    Population
+    Public Sector
+    Regional
+    Science
+    Society
+    Sports
+    Technology
+    Transport
+}
+enum AccessMode {
+    allow
+    restrict
+}
+extend type Product {
+    owners: [String!]
+    rating: Int
+    dataClassification: DataClassificationEnum
+    themes: [ThemesEnum!]
+    images: [String]
+    isPrivate: Boolean
+    accessMode: AccessMode
+    accessAccounts: [String]
+}
+
+extend type CatalogProduct {
+    owners: [String!]
+    avgRating: Float
+    reviewsTotalCount: Int
+    dataClassification: DataClassificationEnum
+    themes: [ThemesEnum!]
+    images: [String]
+    isPrivate: Boolean
+    accessMode: AccessMode
+    accessAccounts: [String]
+}
+
+extend input ProductInput {
+    owners: [String!]
+    dataClassification: DataClassificationEnum
+    themes: [ThemesEnum!]
+    images: [String]
+    isPrivate: Boolean
+    accessMode: AccessMode
+    accessAccounts: [String]
+}
+
+type InvoiceDetails {
+    bic: String!
+    iban: String!
+    taxIdentityNumber: String!
+    additionalInfo: String
+}
+
+extend type Shop {
+    invoiceDetails: InvoiceDetails
+}
+
+input InvoiceDetailsInput {
+    bic: String!
+    iban: String!
+    taxIdentityNumber: String!
+    additionalInfo: String
+}
+
+extend type Mutation {
+    updateShopInvoiceDetails(
+        shopId: ID!
+        input: InvoiceDetailsInput!
+    ): Shop!
+}
+
+type CatalogSearchResult {
+    items: [CatalogItemProduct]!
+    cursor: String
+    count: Int
+}
+type FacetValues {
+    value: String!
+    count: Int!
+}
+type Facet {
+    title: String
+    property: String!
+    values: [FacetValues]!
+}
+
+type CatalogSearchFacetsResult {
+    facets: [Facet]!
+}
+
+input Filters {
+    # array of asset types as string
+    assetType: [String]
+    # array of origin countries as string
+    originCountry: [String]
+    # max current price of the variant
+    maxPrice: Int
+    # min current price of the variant
+    minPrice: Int
+    # array of price model types as string
+    priceModel: [String]
+    option: [String]
+    vendor: [String]
+    tax: [String]
+    dataClassification: [DataClassificationEnum]
+    themes: [ThemesEnum]
+    distributionFormat: [String]
+    distributionType: [String]
+    distributionSize: String
+    language: [String]
+}
+
+input SearchQuery {
+    query: String
+    filters: Filters
+    pageSize: Int
+    cursor: String
+}
+
+extend type Query {
+    "Get a flat rate fulfillment method"
+    searchCatalog(
+        searchQuery: SearchQuery
+        "Shop ID's"
+        shopIds: [ID]!
+        brokerInfo: String
+    ): CatalogSearchResult!
+
+    catalogSearchFacets(
+        "Shop ID's"
+        shopIds: [ID]!
+    ): CatalogSearchFacetsResult!
+
+    accountsGroups(
+        shopId: ID!
+    ): [Group]
+}
+
+extend type Mutation {
+    publishProductToBroker(
+        shopId: ID!
+        productId: ID!
+    ): CatalogProduct
+}

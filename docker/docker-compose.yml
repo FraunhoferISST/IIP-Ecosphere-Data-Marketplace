@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:4.2.0
+    command: mongod --oplogSize 128 --replSet rs0 --storageEngine=wiredTiger
+    container_name: iipe_mongo
+    restart: always
+    networks:
+      iipe:
+    ports:
+      - "27017:27017"
+    volumes:
+      - iipe-mongo:/data/db
+    healthcheck: # re-run rs.initiate() after startup if it failed.
+      test: test $$(echo "rs.status().ok || rs.initiate().ok" | mongo --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+
+  admin:
+    image: ${DOCKER_REGISTRY}/admin:0.4.0-beta
+    container_name: iipe_admin
+    restart: on-failure
+    networks:
+      iipe:
+    ports:
+      - ${ADMIN_PORT}:${ADMIN_PORT}
+    environment:
+      NUXT_API_BASE_URL: ${NUXT_API_BASE_URL}
+      NUXT_PUBLIC_FRONTEND_BASE_URL: ${NUXT_FRONTEND_BASE_URL}
+      NUXT_PUBLIC_DISABLE_REGISTRATION: ${NUXT_DISABLE_REGISTRATION}
+      PORT: ${ADMIN_PORT}
+
+  sf:
+    image: ${DOCKER_REGISTRY}/sf:0.4.0-beta
+    container_name: iipe_sf
+    restart: on-failure
+    networks:
+      iipe:
+    ports:
+      - ${SF_PORT}:${SF_PORT}
+    environment:
+      NUXT_API_BASE_URL: ${NUXT_API_BASE_URL}
+      SF_PORT: ${SF_PORT}
+
+  server:
+    image: ${DOCKER_REGISTRY}/server:0.4.0-beta
+    container_name: iipe_server
+    restart: on-failure
+    networks:
+      iipe:
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    environment:
+      MONGO_URL: ${MONGO_URL}
+      STORE_URL: ""
+      SERVER_PORT: ${SERVER_PORT}
+      ROOT_URL: ${NUXT_API_BASE_URL}
+
+  broker:
+    image: ${DOCKER_REGISTRY}/broker:0.4.0-beta
+    container_name: iipe_broker
+    restart: on-failure
+    networks:
+      iipe:
+    ports:
+      - ${BROKER_PORT}:${BROKER_PORT}
+    environment:
+      NUXT_PUBLIC_FRONTEND_BASE_URL: http://localhost:${BROKER_PORT}
+      NUXT_KNOWN_NODES_CONFIG: ${NUXT_KNOWN_NODES_CONFIG}
+      NUXT_BROKER_API_ENDPOINT: ${NUXT_BROKER_API_ENDPOINT}
+      NUXT_APP_BASE_URL: ${NUXT_BROKER_APP_BASE_URL}
+      PORT: ${BROKER_PORT}
+
+volumes:
+  iipe-mongo:
+
+networks:
+  iipe:
+    name: iipe

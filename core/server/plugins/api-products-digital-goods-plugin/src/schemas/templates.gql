@@ -1,0 +1,38 @@
+enum CustomFieldType {
+    text
+    textarea
+    boolean
+    select
+    customSelect
+}
+
+type CustomField {
+    title: String!
+    attributeName: String!
+    type: CustomFieldType!
+    description: String
+    enum: [String]
+    fullWidth: Boolean
+    multiple: Boolean
+}
+
+type FieldsTemplate {
+    id: ID!
+    title: String!
+    priority: Int,
+    fields: [CustomField]
+    description: String
+}
+
+type FieldsTemplatesResult {
+    templates: [FieldsTemplate]!
+}
+
+extend type Query {
+    # search through the inquiries catalog
+    fieldsTemplates(
+        searchQuery: InquirySearchQuery
+        "Shop ID's"
+        shopIds: [ID]
+    ): FieldsTemplatesResult!
+}

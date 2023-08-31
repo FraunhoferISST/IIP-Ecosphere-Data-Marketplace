@@ -1,0 +1,34 @@
+services:
+  node1:
+    image: ${DOCKER_REGISTRY}/server:0.4.0-beta
+    container_name: iipe_server_node1
+    restart: on-failure
+    ports:
+      - "7000:3000"
+    environment:
+      MONGO_URL: "mongodb://admin:admin@mongo:27017/node1?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false"
+      STORE_URL: ""
+      SERVER_PORT: 3
+      ROOT_URL: "http://server:7000"
+      KNOWN_BROKERS: "http://172.17.0.1:4000/api/verify::http://172.17.0.1:4000"
+    networks:
+      iipe:
+
+  node2:
+    image: ${DOCKER_REGISTRY}/server:0.4.0-beta
+    container_name: iipe_server_node2
+    restart: on-failure
+    ports:
+      - "7001:3000"
+    environment:
+      MONGO_URL: "mongodb://admin:admin@mongo:27017/node2?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false"
+      STORE_URL: ""
+      SERVER_PORT: 3
+      ROOT_URL: "http://server:7001/graphql"
+      KNOWN_BROKERS: "http://172.17.0.1:4000/api/verify::http://localhost:4000"
+    networks:
+      iipe:
+
+networks:
+  iipe:
+    name: iipe

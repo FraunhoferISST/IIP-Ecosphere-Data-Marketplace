@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  admin:
+    build:
+      context: ..
+      dockerfile: ./admin/Dockerfile
+    ports:
+      - ${ADMIN_PORT}:${ADMIN_PORT}
+    environment:
+      NUXT_API_BASE_URL: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:${API_PORT:-3000}/graphql
+      NUXT_FRONTEND_BASE_URL: http://localhost:${ADMIN_PORT}
+      PORT: ${ADMIN_PORT}
+  sf:
+    build:
+      context: ..
+      dockerfile: ./storefront/Dockerfile
+    ports:
+      - ${SF_PORT}:${SF_PORT}
+    environment:
+      NUXT_API_BASE_URL: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:${API_PORT:-3000}/graphql
+      SF_PORT: ${SF_PORT}
+  server:
+    build:
+      context: ../core/server
+    ports:
+      - ${API_PORT:-3000}:${API_PORT:-3000}
+    environment:
+      MONGO_URL: ${MONGO_URL}
+      SERVER_PORT: ${API_PORT:-3000}
+      ROOT_URL: http://localhost:${API_PORT:-3000}
+  broker:
+    build:
+      context: ..
+      dockerfile: ./broker/Dockerfile
+      args:
+        baseURL: ${NUXT_BROKER_APP_BASE_URL:-"/"}
+    environment:
+      NUXT_FRONTEND_BASE_URL: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:${BROKER_PORT:-4000}
+      NUXT_BROKER_API_ENDPOINT: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:${BROKER_PORT:-4000}/api

@@ -1,0 +1,132 @@
+scalar JSON
+
+enum PriceModelType {
+    free
+    once
+    subscription
+    customQuotes
+}
+
+type TimeRange {
+    from: String!
+    to: String
+}
+
+type PriceModel {
+    type: PriceModelType!
+    paymentPeriod: String #yearly, monthly, weekly, daly, hourly...
+    timeRange: TimeRange
+    volume: String
+    quantity: String
+
+}
+
+type Distribution {
+    title: String!
+    description: String
+    format: String
+    size: String
+    mimeType: String
+    type: String
+    encryption: String
+    volume: String
+    modifiedAt: String
+    createdAt: String
+    language: String
+    accessUrl: String
+    user: String
+    password: String
+    metafields: [Metafield]
+}
+enum DataQualityRange {
+    high
+    low
+    medium
+}
+
+type DataQuality {
+    completeness: DataQualityRange
+    accuracy: DataQualityRange
+}
+
+interface AssetMetadata {
+    distributions: [Distribution]
+    dataQuality: DataQuality
+    priceModel: PriceModel
+}
+
+extend type ProductVariant {
+    distributions: [Distribution]
+    dataQuality: DataQuality
+    priceModel: PriceModel
+    versionInfo: String
+    versionNotes: String
+    updateCycle: String
+    assetType: String
+    templates: [FieldsTemplate]
+    templatesFields: JSON
+    images: [String]
+}
+
+extend type CatalogProductVariant {
+    distributions: [Distribution]
+    dataQuality: DataQuality
+    priceModel: PriceModel
+    versionInfo: String
+    versionNotes: String
+    updateCycle: String
+    assetType: String
+    templates: [FieldsTemplate]
+    templatesFields: JSON
+    images: [String]
+}
+
+input DistributionInput {
+    title: String!
+    description: String
+    format: String
+    size: String
+    mimeType: String
+    type: String
+    encryption: String
+    volume: String
+    modifiedAt: String
+    createdAt: String
+    language: String
+    accessUrl: String
+    user: String
+    password: String
+    metafields: [MetafieldInput]
+}
+
+input TimeRangeInput {
+    from: String!
+    to: String
+}
+
+input PriceModelInput {
+    type: PriceModelType!
+    paymentPeriod: String #yearly, monthly, weekly, daly, hourly...
+    timeRange: TimeRangeInput
+    volume: String
+    quantity: String
+
+}
+
+input DataQualityInput {
+    completeness: DataQualityRange
+    accuracy: DataQualityRange
+}
+
+extend input ProductVariantInput {
+    distributions: [DistributionInput]
+    dataQuality: DataQualityInput
+    priceModel: PriceModelInput
+    versionInfo: String
+    versionNotes: String
+    updateCycle: String
+    assetType: String
+    templates: [ID]
+    templatesFields: JSON
+    images: [String]
+}

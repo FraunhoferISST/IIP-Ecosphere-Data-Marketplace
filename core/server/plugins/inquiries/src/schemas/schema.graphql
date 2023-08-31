@@ -1,0 +1,159 @@
+type InquiryOffer {
+  variant: CatalogProductVariant!
+  product: CatalogProduct!
+}
+type InquiryReply {
+  _id: ID!
+  account: Account!
+  offers: [InquiryOffer]
+  message: String
+  accepted: Boolean
+  rejected: Boolean
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Inquiry {
+  _id: ID!
+  title: String!
+  description: String
+  # Short recap of what the use case is
+  useCase: String
+  # What sources are required/wished (e.g. CSV, JSON, Database, API)
+  sourceTypes: [String]
+  # Plain text description of desired pricing
+  desiredPricing: String
+  # Plain text description of expected volumes, e.g. 20Gb, 1000 request per day etc.
+  expectedConsumptionVolume: String
+  # General data category, e.g. Classification, Education, NLP etc.
+  categories: [String]
+  license: String
+  # Date on which the inquiry expires
+  expirationDate: String
+  # Indicates whether tha inquiry is published
+  published: Boolean!
+  # account that created the inquiry
+  account: Account!
+  shop: Shop!
+  createdAt: String!
+  updatedAt: String!
+  repliesCount: Int!
+  replies: [InquiryReply]
+}
+
+type AccountInquiriesResult {
+  inquiries: [Inquiry]!
+}
+
+input InquiriesQueryInput {
+  accountId: ID
+  title: String
+}
+
+input InquiryFilters {
+  sourceTypes: [String]
+  categories: [String]
+  license: [String]
+  replies: [String]
+  expectedConsumptionVolume: [String]
+}
+
+input InquirySearchQuery {
+  query: String
+  filters: InquiryFilters
+  pageSize: Int
+  cursor: String
+}
+
+type InquiriesSearchResult {
+  items: [Inquiry]!
+  cursor: String
+  count: Int
+}
+
+extend type Query {
+  # search through the inquiries catalog
+  searchInquiries(
+    searchQuery: InquirySearchQuery
+    "Shop ID's"
+    shopIds: [ID]!
+  ): InquiriesSearchResult!
+
+  inquiriesSearchFacets(
+    "Shop ID's"
+    shopIds: [ID]!
+  ): CatalogSearchFacetsResult!
+
+  # inquiries of the logged in account
+  accountInquiries(
+    shopId: ID!
+  ): AccountInquiriesResult!
+
+  inquiry(
+    shopId: ID!
+    id: ID!
+  ): Inquiry!
+}
+
+input InquiryInput{
+  title: String!
+  description: String
+  # Short recap of what the use case is
+  useCase: String
+  # What sources are required/wished (e.g. CSV, JSON, Database, API)
+  sourceTypes: [String]
+  # Plain text description of desired pricing
+  desiredPricing: String
+  # Plain text description of expected volumes, e.g. 20Gb, 1000 request per day etc.
+  expectedConsumptionVolume: String
+  # General data category, e.g. Classification, Education, NLP etc.
+  categories: [String]
+  license: String
+  # Date on which the inquiry expires
+  expirationDate: String
+  # Indicates whether tha inquiry is published
+  published: Boolean!
+}
+
+input InquiryOfferInput {
+  variantId: ID!
+  productId: ID!
+}
+input InquiryReplyInput {
+  offers: [InquiryOfferInput]
+  message: String
+}
+
+input AcceptRejectInquiryReplyInput {
+  accepted: Boolean
+  rejected: Boolean
+  # the id of the inquiry reply
+  replyId: ID!
+}
+
+extend type Mutation {
+  createInquiry(
+    shopId: ID!
+    accountId: ID!
+    inquiry: InquiryInput!
+  ): Inquiry!
+  updateInquiry(
+    shopId: ID!
+    accountId: ID!
+    id: ID!
+    inquiry: InquiryInput!
+  ): Inquiry!
+  replyToInquiry(
+    shopId: ID!
+    accountId: ID!
+    # the id of the inquiry
+    id: ID!
+    inquiryReply: InquiryReplyInput!
+  ): Inquiry!
+  acceptRejectInquiryReply(
+    shopId: ID!
+    # the id of the inquiry
+    id: ID!
+    input: AcceptRejectInquiryReplyInput!
+  ): Inquiry!
+}

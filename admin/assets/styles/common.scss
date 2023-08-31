@@ -1,0 +1,15 @@
+.v-btn {
+  text-transform: capitalize !important;
+}
+
+.fill-width{
+  width: 100%;
+}
+
+.link {
+  color: blue;
+  text-decoration: none;
+  &:hover {
+    color: #7836ff;
+  }
+}

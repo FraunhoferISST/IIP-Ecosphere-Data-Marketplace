@@ -1,0 +1,291 @@
+<template>
+  <div id="filters">
+    <SfSidebar
+      :visible="isFilterSidebarOpen"
+      title="Filters"
+      class="sidebar-filters"
+      @close="toggleFilterSidebar"
+    >
+      <div v-if="facets.length > 0">
+        <div class="filters desktop-only">
+          <div>
+            <SfHeading
+              :level="4"
+              title="Price range"
+              class="filters__title sf-heading--left"
+            />
+            <div v-if="selectedFilters.minPrice >= 0">
+              <SfRange
+                :value="[selectedFilters.minPrice || 0, selectedFilters.maxPrice]"
+                :disabled="false"
+                @change="onPriceRangeChange"
+                :config='{"start":[selectedFilters.minPrice || 0, selectedFilters.maxPrice],"range":{"min":priceRangeFacet.minPrice,"max":priceRangeFacet.maxPrice},"step":1,"connect":true,"direction":"ltr","orientation":"horizontal","behaviour":"tap-drag","tooltips":true,"keyboardSupport":true,}'
+              />
+            </div>
+          </div>
+          <div v-for="(facet, i) in facets" :key="i">
+            <div v-if="facet.options.length > 0">
+              <SfHeading
+                :level="4"
+                :title="facet.label"
+                class="filters__title sf-heading--left"
+                :key="`filter-title-${facet.id}`"
+              />
+              <div>
+                <SfFilter
+                  v-for="option in facet.options"
+                  :key="`${facet.id}-${option.value}`"
+                  :count="option.count"
+                  :label="option.title || option.value"
+                  :selected="isFilterSelected(facet, option)"
+                  class="filters__item"
+                  @change="() => selectFilter(facet, option)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <SfAccordion class="filters smartphone-only">
+          <div v-for="(facet, i) in facets" :key="i">
+            <SfAccordionItem
+              :key="`filter-title-${facet.id}`"
+              :header="facet.label"
+              class="filters__accordion-item"
+            >
+              <SfFilter
+                v-for="option in facet.options"
+                :key="`${facet.id}-${option.id}`"
+                :label="option.id"
+                :selected="isFilterSelected(facet, option)"
+                class="filters__item"
+                @change="() => selectFilter(facet, option)"
+              />
+            </SfAccordionItem>
+          </div>
+        </SfAccordion>
+      </div>
+      <div v-else class="p-6 pt-14">
+        <div class="p-4 text-sm text-gray-700 bg-gray-100 rounded-lg dark:bg-gray-700 dark:text-gray-300" role="alert">
+          It looks like there are no offers that can be filtered
+        </div>
+      </div>
+      <template #content-bottom v-if="facets.length > 0">
+        <div class="filters__buttons">
+          <SfButton
+            class="sf-button--full-width"
+            @click="applyFilters"
+          >
+            {{ $t('Done') }}
+          </SfButton
+          >
+          <SfButton
+            class="sf-button--full-width filters__button-clear"
+            @click="clearFilters"
+          >
+            {{ $t('Clear all') }}
+          </SfButton
+          >
+        </div>
+      </template>
+    </SfSidebar>
+  </div>
+</template>
+
+<script>
+import {
+  SfSidebar,
+  SfButton,
+  SfHeading,
+  SfFilter,
+  SfAccordion,
+  SfColor,
+  SfCheckbox,
+  SfRange
+} from "@storefront-ui/vue";
+
+import {ref, onMounted, computed} from "@nuxtjs/composition-api";
+import { useUiHelpers, useUiState } from "~/composables";
+import Vue from "vue";
+import {useFacet} from "@vue-storefront/iiepmarket";
+import _ from "lodash";
+
+export default {
+  name: "FiltersSidebar",
+  components: {
+    SfButton,
+    SfSidebar,
+    SfFilter,
+    SfAccordion,
+    SfColor,
+    SfHeading,
+    SfCheckbox,
+    SfRange,
+  },
+  setup(props, context) {
+    const { isFacetColor } = useUiHelpers();
+    const { toggleFilterSidebar, isFilterSidebarOpen } = useUiState();
+    const { search, result } = useFacet();
+
+    const selectedFilters = ref({});
+    const priceRangeFacet = ref({ minPrice: 0, maxPrice: 0 });
+
+    const facets = computed(() => {
+      return (result.value.data ?? []).map(({ property, values }) => ({
+        label: _.startCase(property),
+        id: property,
+        options: values.map(({ count, value }) => ({ title: _.startCase(value), count, value, id: value})),
+      })).filter(({ id }) => id !== "priceRange");
+    });
+
+    const setSelectedFilters = () => {
+      if (!facets.value.length || Object.keys(selectedFilters.value).length) return;
+      selectedFilters.value = facets.value.reduce((prev, curr) => ({
+        ...prev,
+        [curr.id]: curr.options
+          .filter(o => o.selected)
+          .map(o => o.id),
+      }), {});
+    };
+
+    const isFilterSelected = (facet, option) => (selectedFilters.value[facet.id] || []).includes(option.id);
+
+    const selectFilter = (facet, option) => {
+      if (!selectedFilters.value[facet.id]) {
+        Vue.set(selectedFilters.value, facet.id, []);
+      }
+
+      if (selectedFilters.value[facet.id].find(f => f === option.id)) {
+        selectedFilters.value[facet.id] = selectedFilters.value[facet.id].filter(f => f !== option.id);
+        return;
+      }
+
+      selectedFilters.value[facet.id].push(option.id);
+    };
+
+    const clearFilters = () => {
+      toggleFilterSidebar();
+      selectedFilters.value = {
+        ...priceRangeFacet.value,
+      };
+      context.emit("selectFilters", selectedFilters.value);
+    };
+
+    const applyFilters = () => {
+      toggleFilterSidebar();
+      context.emit("selectFilters", selectedFilters.value);
+    };
+
+    onMounted(() => {
+      context.root.$scrollTo(context.root.$el, 2000);
+      setSelectedFilters();
+    });
+
+    search().then(() => {
+      const loadedFacets = result.value.data;
+      const loadedPriceRangeFacet = loadedFacets.find(({ property }) => property === "priceRange");
+      if (loadedPriceRangeFacet) {
+        const minPrice = parseInt(loadedPriceRangeFacet.values[0].value);
+        const maxPrice = parseInt(loadedPriceRangeFacet.values[1].value);
+        priceRangeFacet.value = {
+          minPrice,
+          maxPrice,
+        };
+        selectedFilters.value.minPrice = minPrice;
+        selectedFilters.value.maxPrice = maxPrice;
+      }
+    });
+
+    return {
+      selectedFilters,
+      facets,
+      priceRangeFacet,
+      isFacetColor,
+      selectFilter,
+      isFilterSelected,
+      isFilterSidebarOpen,
+      toggleFilterSidebar,
+      clearFilters,
+      applyFilters,
+      onPriceRangeChange: ([min, max]) => {
+        selectedFilters.value.minPrice = parseInt(min);
+        selectedFilters.value.maxPrice = parseInt(max);
+      },
+    };
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.sf-range {
+  margin: 40px 0!important;
+}
+.sidebar-filters {
+  --overlay-z-index: 3;
+  --sidebar-title-display: none;
+  --sidebar-top-padding: 0;
+  @include for-desktop {
+    --sidebar-content-padding: 0 var(--spacer-xl);
+    --sidebar-bottom-padding: 0 var(--spacer-xl);
+  }
+}
+::v-deep .sf-sidebar__aside {
+  --sidebar-z-index: 3;
+}
+.filters {
+  &__title {
+    --heading-title-font-size: var(--font-size--xl);
+    margin: var(--spacer-xl) 0 var(--spacer-base) 0;
+    &:first-child {
+      margin: calc(var(--spacer-xl) + var(--spacer-base)) 0 var(--spacer-xs) 0;
+    }
+  }
+  &__colors {
+    display: flex;
+  }
+  &__color {
+    margin: var(--spacer-xs) var(--spacer-xs) var(--spacer-xs) 0;
+  }
+  &__chosen {
+    color: var(--c-text-muted);
+    font-weight: var(--font-weight--normal);
+    font-family: var(--font-family--secondary);
+    position: absolute;
+    right: var(--spacer-xl);
+  }
+  &__item {
+    --radio-container-padding: 0 var(--spacer-sm) 0 var(--spacer-xl);
+    --radio-background: transparent;
+    --filter-label-color: var(--c-secondary-variant);
+    --filter-count-color: var(--c-secondary-variant);
+    --checkbox-padding: 0 var(--spacer-sm) 0 var(--spacer-xl);
+    padding: var(--spacer-sm) 0;
+    border-bottom: 1px solid var(--c-light);
+    &:last-child {
+      border-bottom: 0;
+    }
+    @include for-desktop {
+      --checkbox-padding: 0;
+      margin: var(--spacer-sm) 0;
+      border: 0;
+      padding: 0;
+    }
+  }
+  &__accordion-item {
+    --accordion-item-content-padding: 0;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    width: 100vw;
+  }
+  &__buttons {
+    margin: var(--spacer-sm) 0;
+  }
+  &__button-clear {
+    --button-background: var(--c-light);
+    --button-color: var(--c-dark-variant);
+    margin: var(--spacer-xs) 0 0 0;
+  }
+}
+</style>

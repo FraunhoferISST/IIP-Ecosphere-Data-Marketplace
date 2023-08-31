@@ -1,0 +1,112 @@
+type RatingsCount {
+  rating: Int!
+  count: Int!
+}
+
+type ReviewsAggregation {
+  averageRating: Float
+  totalCount: Int
+  counts: [RatingsCount]
+}
+
+type ReviewAccount {
+  _id: ID!
+  name: String
+  firstName: String
+  lastName: String
+  picture: String
+}
+
+type ReviewAttributedProduct {
+  _id: ID!
+  title: String
+}
+
+type ReviewAttributedShop {
+  _id: ID!
+  name: String
+}
+
+type Review {
+  _id: ID!
+  # Optional review text
+  reviewBody: String
+  # NNumerical review rating
+  reviewRating: Int!
+  # The entity (product, shop, account) for which this review was written
+  attributedShopId: ID
+  attributedProductId: ID
+  attributedAccountId: ID
+  attributedShop: ReviewAttributedShop
+  attributedProduct: ReviewAttributedProduct
+  attributedAccount: ReviewAccount
+  # Account that wrote the review
+  account: ReviewAccount!
+  createdAt: String!
+  published: Boolean!
+}
+
+type Reviews {
+  reviews: [Review]!
+}
+
+type CanAddReviews {
+  canAddReview: Boolean!
+}
+
+extend type Query {
+  reviews(
+    shopId: ID!
+    accountId: ID
+    attributedShopId: ID
+    attributedProductId: ID
+    attributedAccountId: ID
+  ): Reviews!
+  canAddReview(
+    shopId: ID!
+    accountId: ID!
+    # The `id` of the entity the review should be attributed to, can be `shopId`, `productId` etc.
+    attributedId: ID!
+  ): CanAddReviews!
+  reviewsAggregation(
+    shopId: ID!
+    accountId: ID
+    attributedShopId: ID
+    attributedProductId: ID
+    attributedAccountId: ID
+  ): ReviewsAggregation
+}
+
+input ProductReviewInput {
+shopId: ID!
+accountId: ID!
+attributedProductId: ID!
+reviewBody: String
+reviewRating: Int!
+}
+input AccountReviewInput {
+  shopId: ID!
+  accountId: ID!
+  attributedAccountId: ID!
+  reviewBody: String
+  reviewRating: Int!
+}
+input ShopReviewInput {
+  shopId: ID!
+  accountId: ID!
+  attributedShopId: ID!
+  reviewBody: String
+  reviewRating: Int!
+}
+
+extend type Mutation {
+  addProductReview(
+    input: ProductReviewInput!
+  ): Review!
+  addShopReview(
+    input: ShopReviewInput!
+  ): Review!
+  addAccountReview(
+    input: AccountReviewInput!
+  ): Review!
+}

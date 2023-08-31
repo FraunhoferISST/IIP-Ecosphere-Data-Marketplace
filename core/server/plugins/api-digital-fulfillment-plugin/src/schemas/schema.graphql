@@ -1,0 +1,301 @@
+####
+# Base
+####
+
+type CartPaymentMethod {
+  # Human-readable display name
+  displayName: String!
+
+  # The payment method name. Any valid name that has been registered by a payment plugin. e.g., saved_card
+  name: String!
+
+  # Name of the plugin that added the payment method
+  pluginName: String!
+}
+
+extend type Cart {
+  paymentMethod: CartPaymentMethod
+}
+
+type FulfillmentDistribution {
+  title: String!
+  description: String
+  format: String
+  size: String
+  mimeType: String
+  type: String
+  accessUrl: String
+  user: String
+  password: String
+  encryption: String
+  volume: String
+  modifiedAt: String
+  createdAt: String
+  language: String
+  metafields: [Metafield]
+}
+
+type DistributionGroup {
+  title: String!
+  distributions: [FulfillmentDistribution]!
+}
+
+type OrderFulfilmentOption {
+  productId: ID!
+  variantId: ID!
+  variantTitle: String
+  quantity: Int!
+  distributionsGroups: [DistributionGroup]!
+}
+
+type OrderFulfilment {
+  fulfillment: [OrderFulfilmentOption]
+}
+
+type OrderInvoice {
+  invoice: String!
+}
+
+type Methods {
+  methods: [DigitalFulfillmentMethod]!
+}
+
+extend type Query {
+  "Get a flat rate fulfillment method"
+  digitalFulfillmentMethod(
+    "Fulfillment method id"
+    methodId: ID!
+
+    "Shop ID"
+    shopId: ID!
+  ): DigitalFulfillmentMethod!
+
+  "Get a digital fulfillment methods"
+  digitalFulfillmentMethods(
+    "Shop ID"
+    shopId: ID!
+  ): Methods!
+
+  accountOrderFulfillment(
+    shopId: ID!
+    accountId: ID
+    orderReferenceId: ID!
+  ): OrderFulfilment!
+
+  orderFulfillment(
+    shopId: ID!
+    orderId: ID!
+  ): OrderFulfilment!
+
+  orderInvoice(
+    shopId: ID!
+    orderId: ID!
+    languageCode: String
+  ): OrderInvoice!
+}
+
+extend type Mutation {
+  "Create a digital fulfillment method"
+  createDigitalFulfillmentMethod(
+    "Mutation input"
+    input: CreateDigitalFulfillmentMethodInput!
+  ): CreateDigitalFulfillmentMethodPayload!
+
+  "Update a digital fulfillment method"
+  updateDigitalFulfillmentMethod(
+    "Mutation input"
+    input: UpdateDigitalFulfillmentMethodInput!
+  ): UpdateDigitalFulfillmentMethodPayload!
+
+  "Delete a digital fulfillment method"
+  deleteDigitalFulfillmentMethod(
+    "Mutation input"
+    input: DeleteDigitalFulfillmentMethodInput!
+  ): DeleteDigitalFulfillmentMethodPayload!
+
+  createOrderFulfillment(
+    "Mutation input"
+    input: CreateOrderFulfillmentInput!
+  ): CreateOrderFulfillmentPayload!
+
+  setCartPaymentMethod(
+    "Persist a payment method within the cart"
+    input: SetCartPaymentMethodInput!
+  ): CartPaymentMethod!
+}
+
+"Defines a fulfillment method that has a fixed price. This type is provided by the `flat-rate` fulfillment plugin."
+type DigitalFulfillmentMethod {
+  "The flat rate fulfillment method ID"
+  _id: ID!
+
+  "The cost of this fulfillment method to the shop, if you track this"
+  cost: Float
+
+  """
+  The fulfillment types for which this method may be used. For example, `shipping` or `digital`.
+  """
+  fulfillmentTypes: [FulfillmentType]!
+
+  "The group to which this method belongs"
+  group: String!
+
+  "A fixed price to charge for handling costs when this fulfillment method is selected for an order"
+  handling: Float!
+
+  "Include this as a fulfillment option shown to shoppers during checkout?"
+  isEnabled: Boolean!
+
+  "The name of this method, for display in the user interface"
+  label: String!
+
+  "The name of this method, a unique identifier"
+  name: String!
+
+  "A fixed price to charge for fulfillment costs when this fulfillment method is selected for an order"
+  rate: Float!
+}
+
+####
+# Inputs
+####
+
+input DigitalFulfillmentMethodInput {
+  "The cost of this fulfillment method to the shop, if you track this"
+  cost: Float
+
+  """
+  The fulfillment types for which this method may be used. For example, `shipping` or `digital`.
+  """
+  fulfillmentTypes: [FulfillmentType]!
+
+  "The group to which this method belongs"
+  group: String!
+
+  "A fixed price to charge for handling costs when this fulfillment method is selected for an order"
+  handling: Float!
+
+  "Include this as a fulfillment option shown to shoppers during checkout?"
+  isEnabled: Boolean!
+
+  "The name of this method, for display in the user interface"
+  label: String!
+
+  "The name of this method, a unique identifier"
+  name: String!
+
+  "A fixed price to charge for fulfillment costs when this fulfillment method is selected for an order"
+  rate: Float!
+}
+
+input FulfillmentDistributionInput {
+  title: String!
+  description: String
+  accessUrl: String
+  format: String
+  size: String
+  mimeType: String
+  type: String
+  user: String
+  password: String
+  encryption: String
+  volume: String
+  modifiedAt: String
+  createdAt: String
+  language: String
+  metafields: [MetafieldInput]
+}
+
+input DistributionGroupInput {
+  title: String!
+  distributions: [FulfillmentDistributionInput]!
+}
+
+input OrderFulfilmentOptionInput {
+  productId: ID!
+  variantId: ID!
+  variantTitle: String
+  quantity: Int!
+  distributionsGroups: [DistributionGroupInput]!
+}
+
+input CartPaymentMethodInput {
+  # Human-readable display name
+  displayName: String!
+
+  # The payment method name. Any valid name that has been registered by a payment plugin. e.g., saved_card
+  name: String!
+
+  # Name of the plugin that added the payment method
+  pluginName: String!
+}
+
+"Input for the `createFlatRateFulfillmentMethod` mutation"
+input CreateDigitalFulfillmentMethodInput {
+  "This defines the flat rate fulfillment method that you want to create"
+  method: DigitalFulfillmentMethodInput!
+
+  "The shop to create this fulfillment method for"
+  shopId: ID!
+}
+
+input UpdateDigitalFulfillmentMethodInput {
+  "The updated method. Pass the whole updated method object without the ID."
+  method: DigitalFulfillmentMethodInput!
+
+  "The ID of the flat rate fulfillment method you want to update"
+  methodId: ID!
+
+  "The shop that owns the method"
+  shopId: ID!
+}
+
+input DeleteDigitalFulfillmentMethodInput {
+  "The ID of the flat rate fulfillment method you want to delete"
+  methodId: ID!
+
+  "The shop that owns the method"
+  shopId: ID!
+}
+
+input CreateOrderFulfillmentInput {
+  "The ID of the flat rate fulfillment method you want to delete"
+  orderId: ID!
+
+  "The shop that owns the method"
+  shopId: ID!
+
+  fulfillment: [OrderFulfilmentOptionInput]!
+}
+
+input SetCartPaymentMethodInput {
+  cartId: ID!
+  shopId: ID!
+  paymentMethod: CartPaymentMethodInput!
+}
+
+####
+# Payloads
+####
+
+"Response from the `createFlatRateFulfillmentMethod` mutation"
+type CreateDigitalFulfillmentMethodPayload {
+  "The created fulfillment method"
+  method: DigitalFulfillmentMethod!
+}
+
+"Response from the `updateFlatRateFulfillmentMethod` mutation"
+type UpdateDigitalFulfillmentMethodPayload {
+  "The updated fulfillment method"
+  method: DigitalFulfillmentMethod!
+}
+
+"Response from the `deleteFlatRateFulfillmentMethod` mutation"
+type DeleteDigitalFulfillmentMethodPayload {
+  "The removed fulfillment method"
+  method: DigitalFulfillmentMethod!
+}
+
+type CreateOrderFulfillmentPayload {
+  fulfillment: [OrderFulfilmentOption]!
+}

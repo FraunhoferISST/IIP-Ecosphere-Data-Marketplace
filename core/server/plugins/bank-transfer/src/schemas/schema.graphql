@@ -1,0 +1,22 @@
+"Data for an example IOU payment"
+type BankTransferData {
+  userMarkedAsPaid: Boolean
+}
+
+extend union PaymentData = BankTransferData
+
+extend enum PaymentMethodName {
+  "IOU Example payment method"
+  bank_transfer
+}
+
+extend type Payment {
+  userMarkedAsPaid: Boolean
+}
+
+extend type Mutation {
+  markOrderAsPaid(
+    shopId: ID!
+    referenceId: ID!
+  ): Order!
+}
